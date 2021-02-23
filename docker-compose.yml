@@ -4,6 +4,8 @@ services:
     build: .
     volumes:
       - .:/app
+      - /app/client/node_modules
+      - /app/server/node_modules
     command: npm run dev
     ports:
       - "3000:3000"
@@ -14,7 +16,7 @@ services:
       - db
   db:
     container_name: postgres
-    image: postgres:latest
+    image: postgres:alpine
     ports:
       - "5432:5432"
     environment:

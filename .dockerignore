@@ -1,5 +1,5 @@
 .git
-*/node_modules
-*/.vscode
+**/node_modules
+**/.vscode
 /client/public/build
 /server/dist
