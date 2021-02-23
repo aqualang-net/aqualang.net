@@ -1,0 +1,16 @@
+{
+  "name": "aqualang",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "cd server && npm start",
+    "release": "cd server && npm run migrate:deploy",
+    "build": "cd client && npm run build && cd ../server && npm run build",
+    "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\""
+  },
+  "author": "Astavie",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^6.0.0"
+  }
+}
