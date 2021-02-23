@@ -9,6 +9,5 @@
                 "heroku-postgresql:hobby-dev"
             ]
         }
-    },
-    "stack": "container"
+    }
 }

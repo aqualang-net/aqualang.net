@@ -1,10 +1,7 @@
 version: '3'
 services:
   web:
-    build:
-      context: .
-      args:
-        NODE_ENV: development
+    build: .
     volumes:
       - .:/app
       - /app/client/node_modules
