@@ -1,5 +1,7 @@
 FROM node:15-alpine
 
+ARG NODE_ENV=production
+
 WORKDIR /app
 COPY . .
 RUN npm install -g prisma
