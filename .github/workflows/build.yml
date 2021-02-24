@@ -6,6 +6,9 @@ on:
     - staging
     - production
   pull_request:
+    branches-ignore:
+    - staging
+    - production
 
 jobs:
   build:
