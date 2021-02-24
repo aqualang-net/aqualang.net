@@ -1,0 +1,18 @@
+name: Node.js CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build and run the docker-compose stack
+      run: docker-compose up -d
+    - name: Copy heroku database to postgres container
+      run: heroku pg:pull DATABASE_URL postgres://admin:admin@postgres:5432/postgres --app aqualang-production
+    - name: Run migration on database
+      run: docker exec web npm run release
