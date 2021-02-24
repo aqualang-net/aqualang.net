@@ -29,12 +29,12 @@ jobs:
     steps:
     - name: Check out repository code
       uses: actions/checkout@v2
-      if: ${{ github.event_name != 'pull_request' }}
+      if: ${{ github.event_name != 'pull_request_target' }}
     - name: Check out pull request code
       uses: actions/checkout@v2
       with:
         ref: 'refs/pull/${{ github.event.number }}/merge'
-      if: ${{ github.event_name == 'pull_request' }}
+      if: ${{ github.event_name == 'pull_request_target' }}
     - name: Pull Heroku database
       run: HEROKU_API_KEY=${{ secrets.HEROKU_API_KEY }} heroku pg:pull DATABASE_URL postgres://admin:admin@localhost:5432/aqualang --app aqualang-production
     - name: Run migration on database
