@@ -1,6 +1,11 @@
 name: Build Test
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+    - staging
+    - production
+  pull_request:
 
 jobs:
   build:

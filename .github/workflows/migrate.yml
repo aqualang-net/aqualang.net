@@ -2,6 +2,9 @@ name: Migrate Test
 
 on:
   push:
+    branches-ignore:
+    - staging
+    - production
     paths:
     - 'server/prisma/migrations/**'
   pull_request_target:
