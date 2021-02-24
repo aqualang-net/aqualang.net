@@ -1,6 +1,7 @@
 name: Migrate Test
 
 on: [push, pull_request_target]
+
 #    paths:
 #    - 'server/prisma/migrations/**'
 
