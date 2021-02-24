@@ -1,0 +1,37 @@
+name: Migrate Test
+
+on:
+  push:
+#    paths:
+#    - 'server/prisma/migrations/**'
+  pull_request_target:
+#    paths:
+#    - 'server/prisma/migrations/**'
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    env:
+      PGUSER: admin
+      PGPASSWORD: admin
+      DATABASE_URL: postgres://admin:admin@localhost:5432/aqualang
+      NODE_ENV: production
+    
+    services:
+      postgres:
+        image: postgres:alpine
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin
+      
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event_name == 'pull_request' ? 'refs/pull/${{ github.event.number }}/merge' : '$GITHUB_REF' }}
+    - name: Pull Heroku database
+      run: HEROKU_API_KEY=${{ secrets.HEROKU_API_KEY }} heroku pg:pull DATABASE_URL postgres://admin:admin@localhost:5432/aqualang --app aqualang-production
+    - name: Run migration on database
+      run: npm i -g prisma && cd server && npx prisma migrate deploy --preview-feature

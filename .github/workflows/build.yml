@@ -1,0 +1,15 @@
+name: Build Test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v2
+    - name: Build
+      run: npm run heroku-postbuild
