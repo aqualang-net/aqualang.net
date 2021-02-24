@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Build and Migrate Test
 
 on: [push, pull_request]
 
@@ -9,12 +9,24 @@ jobs:
       HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
       PGUSER: admin
       PGPASSWORD: admin
+      DATABASE_URL: postgres://admin:admin@localhost:5432/aqualang
+    
+    services:
+      image: postgres:alpine
+      ports:
+        - "5432:5432"
+      env:
+        POSTGRES_USER: admin
+        POSTGRES_PASSWORD: admin
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Build the docker-compose stack
-      run: docker-compose up -d
-    - name: Pull Heroku database to docker container
+    - name: Check out repository code
+      uses: actions/checkout@v2
+    - name: Install dependencies
+      run: npm ci && cd client && npm ci && cd ../server && npm ci
+    - name: Build
+      run: npm run build
+    - name: Pull Heroku database to postgresql service
       run: heroku pg:pull DATABASE_URL postgres://admin:admin@localhost:5432/aqualang --app aqualang-production
     - name: Run migration on database
-      run: docker exec web npm run release
+      run: npm run release
