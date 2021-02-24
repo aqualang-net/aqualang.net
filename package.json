@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "start": "cd server && npm start",
-    "release": "cd server && npm run migrate:deploy",
+    "migrate": "cd server && npm run migrate:deploy",
     "build": "cd client && npm run build && cd ../server && npm run build",
     "heroku-postbuild": "cd client && npm install --production=false && npm run build && npm prune && cd ../server && npm install --production=false && npm run build && npm prune",
     "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\""

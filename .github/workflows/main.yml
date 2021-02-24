@@ -10,6 +10,7 @@ jobs:
       PGUSER: admin
       PGPASSWORD: admin
       DATABASE_URL: postgres://admin:admin@localhost:5432/aqualang
+      NODE_ENV: production
     
     services:
       postgres:
@@ -23,11 +24,9 @@ jobs:
     steps:
     - name: Check out repository code
       uses: actions/checkout@v2
-    - name: Install dependencies
-      run: npm ci && cd client && npm ci && cd ../server && npm ci
     - name: Build
-      run: npm run build
+      run: npm run heroku-postbuild
     - name: Pull Heroku database to postgresql service
       run: heroku pg:pull DATABASE_URL postgres://admin:admin@localhost:5432/aqualang --app aqualang-production
     - name: Run migration on database
-      run: npm run release
+      run: npm run migrate
