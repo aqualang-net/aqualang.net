@@ -1,10 +1,6 @@
 name: Migrate Test
 
-on:
-  push:
-#    paths:
-#    - 'server/prisma/migrations/**'
-  pull_request_target:
+on: [push, pull_request_target]
 #    paths:
 #    - 'server/prisma/migrations/**'
 
@@ -38,4 +34,4 @@ jobs:
     - name: Pull Heroku database
       run: HEROKU_API_KEY=${{ secrets.HEROKU_API_KEY }} heroku pg:pull DATABASE_URL postgres://admin:admin@localhost:5432/aqualang --app aqualang-production
     - name: Run migration on database
-      run: npm i -g prisma && cd server && npx prisma migrate deploy --preview-feature
+      run: cd server && npm i prisma && npx prisma migrate deploy --preview-feature
