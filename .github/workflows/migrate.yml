@@ -1,7 +1,6 @@
 name: Migrate Test
 
 on: [push, pull_request_target]
-
 #    paths:
 #    - 'server/prisma/migrations/**'
 
@@ -24,6 +23,9 @@ jobs:
           POSTGRES_PASSWORD: admin
       
     steps:
+    - name: Check out repository code
+      uses: actions/checkout@v2
+      if: ${{ github.event_name != 'pull_request' }}
     - name: Check out pull request code
       uses: actions/checkout@v2
       with:
