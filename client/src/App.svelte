@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { initClient } from "@urql/svelte";
-	import HintedText from "./HintedText.svelte";
-	import PopupManager from "./PopupManager.svelte";
+	import HintedText from "./text/HintedText.svelte";
+	import PopupManager from "./text/PopupManager.svelte";
 
 	initClient({
 		url: "http://localhost:3000/graphql",

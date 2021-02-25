@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { WritingSettings } from "./conlang";
+    import type { WritingSettings } from "../conlang";
 
     export let settings: WritingSettings = {
         horizontal: true,

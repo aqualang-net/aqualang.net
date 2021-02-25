@@ -1,6 +1,6 @@
 <script lang="ts">
     import { afterUpdate, getContext } from "svelte";
-    import type { WritingSettings } from "./conlang";
+    import type { WritingSettings } from "../conlang";
     import { key } from "./popupmanager";
     import Hint from "./Hint.svelte";
     import OrientatedText from "./OrientatedText.svelte";

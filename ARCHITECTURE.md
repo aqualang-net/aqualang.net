@@ -10,7 +10,11 @@ The frontend gets data from the backend using a [GraphQL](https://graphql.org) W
 
 ### > `client/src`
 
-Here lies the source code of the frontend, written mostly in Svelte and TypeScript. This code will be compiled and put in `client/public/build`.
+Here lies the source code of the frontend, written mostly in Svelte and TypeScript. This code will be compiled and put in `client/public/build`. The starting point is `main.ts`.
+
+### > `client/src/text`
+
+Contains the code for rendering conlang text, including writing direction and hint popups.
 
 ### > `client/public`
 
