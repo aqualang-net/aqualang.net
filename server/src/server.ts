@@ -2,23 +2,22 @@ import express from "express";
 import compression from "compression";
 import helmet from "helmet";
 import path from "path";
-import "graphql-import-node";
-import * as schema from "./api/schema.graphql"
-import { resolvers } from "./api/resolvers";
-import { ApolloServer } from "apollo-server-express";
 
-// Create Apollo server
-const server = new ApolloServer({ typeDefs: schema, resolvers });
+import { addResolvers } from "./api/resolvers";
 
 // Create Express app
 const PORT = process.env.PORT || 3000;
 const app = express();
-// app.use(helmet()); // ! Doesn't work with the graphql playground
+app.use(helmet());
 app.use(compression());
-server.applyMiddleware({ app, path: '/graphql' });
 
 // Set index.html
 app.use(express.static(path.resolve('../client/public')));
+
+// API
+addResolvers(app);
+
+// Redirect the rest to Svelte
 app.get('*', function (_req, res) {
     res.sendFile(path.resolve('../client/public/index.html'));
 });

@@ -5,13 +5,15 @@
   "scripts": {
     "start": "cd server && npm start",
     "migrate": "cd server && npm run migrate:deploy",
-    "build": "cd client && npm run build && cd ../server && npm run build",
+    "openapi": "npx openapi-typescript api/openapi.yaml --output server/src/api/generated/schema.ts",
+    "build": "npm run openapi && cd client && npm run build && cd ../server && npm run build",
     "heroku-postbuild": "cd client && npm install --production=false && npm run build && npm prune && cd ../server && npm install --production=false && npm run build && npm prune",
-    "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\""
+    "dev": "npm run openapi && concurrently \"cd client && npm run dev\" \"cd server && npm run dev\""
   },
   "author": "Astavie",
   "license": "ISC",
   "devDependencies": {
-    "concurrently": "^6.0.0"
+    "concurrently": "^6.0.0",
+    "openapi-typescript": "^3.0.1"
   }
 }

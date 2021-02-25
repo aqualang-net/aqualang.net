@@ -1,0 +1,188 @@
+openapi: 3.0.0
+info:
+  description: |
+    A website where you can create and take conlang learning courses.
+  version: "0.1.0"
+  title: aqualang
+  contact:
+    email: astavie@protonmail.com
+  license:
+    name: GPL-3.0
+    url: 'https://github.com/aqualang-net/aqualang.net/blob/development/LICENSE'
+paths:
+  /conlangs:
+    get:
+      description: List all conlangs
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Conlang'
+  /conlangs/{id}:
+    get:
+      description: Obtain information about a specific conlang
+      parameters:
+      - in: path
+        name: id
+        required: true
+        description: The ID of the conlang
+        schema:
+          type: integer
+          example: 4
+      responses:
+        '404':
+          description: Conlang not found
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Error'
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conlang'
+  /conlangs/{id}/hints/natlang:
+    get:
+      description: Obtain all natlang-to-conlang components and their hints from a conlang
+      parameters:
+      - in: path
+        name: id
+        required: true
+        description: The ID of the conlang
+        schema:
+          type: integer
+          example: 4
+      - in: query
+        name: from
+        required: false
+        description: When specified, only the component with that key and its subcomponents will be sent
+        schema:
+          type: string
+          example: person
+      responses:
+        '404':
+          description: Conlang not found
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Error'
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hint'
+  /conlangs/{id}/hints/conlang:
+    get:
+      description: Obtain all conlang-to-natlang components and their hints from a conlang
+      parameters:
+      - in: path
+        name: id
+        required: true
+        description: The ID of the conlang
+        schema:
+          type: integer
+          example: 4
+      - in: query
+        name: from
+        required: false
+        description: When specified, only the component with that key and its subcomponents will be sent
+        schema:
+          type: string
+          example: person
+      responses:
+        '404':
+          description: Conlang not found
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/Error'
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Hint'
+externalDocs:
+  description: Find out more about aqualang
+  url: 'https://github.com/aqualang-net/aqualang.net'
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+      - error
+      - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    Conlang:
+      type: object
+      required:
+      - id
+      - name
+      - published
+      properties:
+        id:
+          type: integer
+          example: 4
+        name:
+          type: string
+          example: 'Toki Pona'
+        published:
+          type: boolean
+          example: true
+    Hint:
+      type: object
+      required:
+      - id
+      - key
+      - hints
+      - natlang
+      properties:
+        id:
+          type: integer
+          example: 4
+        key:
+          type: string
+          example: 'jan'
+        natlang:
+          type: boolean
+          example: false
+        hints:
+          type: array
+          items:
+            type: string
+            example: 'person'
+        components:
+          type: array
+          items:
+            type: array
+            items:
+              required:
+              - start
+              - end
+              properties:
+                prefix:
+                  type: boolean
+                  example: false
+                suffix:
+                  type: boolean
+                  example: false
+                start:
+                  type: integer
+                  example: 0
+                end:
+                  type: integer
+                  example: 3

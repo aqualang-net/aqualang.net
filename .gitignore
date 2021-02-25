@@ -3,3 +3,4 @@ node_modules
 .vscode
 /client/public/build
 /server/dist
+/server/src/api/generated

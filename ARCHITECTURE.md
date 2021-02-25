@@ -2,11 +2,17 @@
 
 This document describes the high-level architecture of **aqualang**. Both the frontend and backend are mainly written in [TypeScript](https://www.typescriptlang.org).
 
+## The API
+
+For the frontend to get and post data to the backend, **aqualang** uses a RESTful API.
+
+#### > `api`
+
+The `openapi.yaml` file describes the API using the OpenAPI Specification. The `errors.yaml` file lists the possible error messages the API can respond with.
+
 ## The Frontend
 
 The frotend of aqualang is located in the `client` folder. This is where visible webpages lie that the end user interacts with. It is written using [Svelte](https://svelte.dev/), a lightweight javascript framework. Scripting is done with TypeScript and styling is done with SCSS, a superset of CSS.
-
-The frontend gets data from the backend using a [GraphQL](https://graphql.org) Web API. Requesting data from this API is handled by [urql](https://formidable.com/open-source/urql/), a lightweight GraphQL client.
 
 ### > `client/src`
 
@@ -24,8 +30,6 @@ This folder contains all files visible from the browser. Most importantly, it co
 
 The backend of aqualang is located in the `server` folder. The backend is written using [Express.js](https://expressjs.com), a web framework that runs on javascript. (or, in this case, on typescript.)
 
-The frontend gets data from the backend using a [GraphQL](https://graphql.org) Web API. Requests to this API are handled by [Apollo Server](https://www.apollographql.com/docs/apollo-server/), which gets the data from the database.
-
 **aqualang** uses a [PostgreSQL](https://www.postgresql.org) database. To query this database from typescript, we use [Prisma](https://www.prisma.io). Prisma also handles database migrations when the schema of the database changes.
 
 ### > `server/src`
@@ -34,7 +38,7 @@ Contains the code to get the Express.js app running. The starting point is `serv
 
 ### > `server/src/api`
 
-Contains the GraphQL resolvers that query the database using Prisma. It also contains the GraphQL API schema in `schema.graphql`. The typescript types generated from this schema are put in `server/src/api/generated`.
+Contains the API request resolvers that query the database using Prisma.
 
 ### > `server/prisma`
 

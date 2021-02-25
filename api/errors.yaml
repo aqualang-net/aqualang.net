@@ -1,0 +1,38 @@
+# This file describes all error messages given from the API when it sends a 4xx status code
+# The payload of those responses will always be:
+# {
+#   "error": "error_code"
+#   "message": "message"
+# }
+# This YAML file has the error codes as keys and the messages and status codes as values inside those objects
+# Error codes can be added or removed, but must NEVER be renamed
+# Messages can be changed whenever
+
+## Generic error messages ##
+
+# When the payload from the client is not in the format we expected
+badrequest:
+  status_code: 400
+  message: "Bad Request"
+
+# When the URI doesn't exist
+notfound:
+  status_code: 404
+  message: "Not Found"
+
+# When the HTTP request method doesn't exist for the URI
+badmethod:
+  status_code: 405
+  message: "Method Not Allowed"
+
+## Components ##
+
+# When the client tries to add an empty hint
+badhint:
+  status_code: 400
+  message: "Component must have at least one hint"
+
+# When the client tries to add overlapping components or components that are out of bounds
+badcomponent:
+  status_code: 400
+  message: "Components may not overlap or go out of bounds"

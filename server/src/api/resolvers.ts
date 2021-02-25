@@ -1,15 +1,19 @@
-import { UserInputError } from "apollo-server-express";
-import { Resolvers, Section, Hint } from "./generated/graphql";
+import { Express, Request, Response } from "express";
 import { PrismaClient, Prisma } from "@prisma/client"
+import { error, restful } from "./restful";
+import { components } from "./generated/schema";
 
 const prisma = new PrismaClient();
 
-function getLookup(sentence: string, span: Section[]): string {
+type Conlang = components["schemas"]["Conlang"];
+type Hint = components["schemas"]["Hint"];
+type Component = NonNullable<Hint["components"]>[number];
+
+function getLookup(sentence: string, span: Component): string {
     let lookup = '';
 
     for (let section of span) {
         if (section.start < 0 || section.end > sentence.length) {
-            throw new UserInputError('Span section is bigger than the sentence provided');
         }
 
         if (section.suffix) {
@@ -39,14 +43,14 @@ function getHint(conlang: number, fromConlang: boolean, key: string) {
     });
 }
 
-async function getHintAreas(hint: number) {
+async function getHintComponents(hint: number) {
     const sections = await prisma.section.findMany({
         where: {
             hintId: hint
         }
     });
 
-    const map: { [key: string]: Section[]; } = {};
+    const map: { [key: string]: Component; } = {};
 
     for (const section of sections) {
         if (!map[section.areaStart])
@@ -148,103 +152,152 @@ async function removeEntireHint(hintId: number) {
     return true;
 }
 
-export const resolvers: Resolvers = {
-    Query: {
-        hint: async (_parent, args) => {
-            const input = args.phrase;
+async function getPrismaConlang(id: string) {
+    for (let char of id)
+        if (char < '0' || char > '9')
+            return null;
 
+    const num = parseInt(id);
+    return await prisma.conlang.findUnique({
+        where: {
+            id: num
+        }
+    });
+}
+
+async function getAllHints(id: string, fromConlang: boolean) {
+    const c = await getPrismaConlang(id);
+    if (c === null)
+        return null;
+
+    const hints = await prisma.hint.findMany({
+        where: {
+            fromConlang: fromConlang,
+            conlangId: c.id
+        }
+    });
+    const output: Hint[] = [];
+
+    for (let hint of hints) {
+        const components = await getHintComponents(hint.id);
+        output.push({
+            id: hint.id,
+            key: hint.key,
+            hints: hint.hints.split('\n'),
+            components: components,
+            natlang: !hint.fromConlang
+        });
+    }
+
+    return output;
+}
+
+async function getRecursiveHints(id: string, fromConlang: boolean, key: string) {
+    const c = await getPrismaConlang(id);
+    if (c === null)
+        return null;
+
+    // Get first hint
+    const hint = await getHint(c.id, fromConlang, key);
+    if (hint === null) {
+        return [];
+    }
+
+    const processed = new Set();
+    processed.add(key);
+
+    // Get subsequent hints
+    const hints = [hint];
+    const output: Hint[] = [];
+
+    for (let i = 0; i < hints.length; i++) {
+        const components = await getHintComponents(hints[i].id);
+        output.push({
+            id: hints[i].id,
+            key: hints[i].key,
+            hints: hints[i].hints.split('\n'),
+            components: components,
+            natlang: !hint.fromConlang
+        });
+
+        for (const area of components) {
             // Get lookup key
-            const lookup = getLookup(input.sentence, input.area);
-
-            // Get first hint
-            const hint = await getHint(args.conlang, input.fromConlang, lookup);
-            if (hint === null) {
-                return [];
-            }
-
-            const processed = new Set();
+            const lookup = getLookup(hints[i].key, area);
+            if (processed.has(lookup)) continue;
             processed.add(lookup);
 
-            // Get subsequent hints
-            const hints = [hint];
-            const output: Hint[] = [];
-
-            for (let i = 0; i < hints.length; i++) {
-                const areas = await getHintAreas(hints[i].id);
-                output.push({
-                    id: hints[i].id,
-                    key: hints[i].key,
-                    hints: hints[i].hints.split('\n'),
-                    areas: areas
-                });
-
-                for (const area of areas) {
-                    // Get lookup key
-                    const lookup = getLookup(hints[i].key, area);
-                    if (processed.has(lookup)) continue;
-                    processed.add(lookup);
-
-                    // Get hint
-                    const subHint = await getHint(args.conlang, input.fromConlang, lookup);
-                    if (subHint === null) continue;
-                    hints.push(subHint);
-                }
-            }
-
-            // Return results
-            return output;
-        },
-        conlang: (_parent, args) => {
-            return prisma.conlang.findUnique({
-                where: {
-                    id: args.id
-                }
-            });
-        },
-    },
-    Mutation: {
-        addNewHint: async (_parent, args) => {
-            const lookup = getLookup(args.phrase.sentence, args.phrase.area);
-
-            const hint = await prisma.hint.create({
-                data: {
-                    key: lookup,
-                    hints: args.hint,
-                    fromConlang: args.phrase.fromConlang,
-                    conlangId: args.conlang
-                }
-            }).catch(e => {
-                if (e instanceof Prisma.PrismaClientKnownRequestError) {
-                    switch (e.code) {
-                        case "P2002": // Unique constraint
-                            throw new UserInputError(`Hint with key '${lookup}' already exists`);
-                        case "P2003": // Foreign key constraint
-                            throw new UserInputError(`Unknown conlang with id '${args.conlang}'`);
-                    }
-                }
-
-                // Something happened we didn't expect!
-                throw e;
-            });
-
-            return {
-                id: hint.id,
-                key: hint.key,
-                areas: [],
-                hints: hint.hints.split('\n')
-            }
-        },
-        addHint: (_parent, args) => {
-            return addHint(args.hint, args.string);
-        },
-        setHint: (_parent, args) => {
-            return setHint(args.hint, args.index, args.string);
-        },
-        removeHint: (_parent, args) => {
-            return removeHint(args.hint, args.index);
-        },
-        removeEntireHint: (_parent, args) => {
-            return removeEntireHint(args.hint);
+            // Get hint
+            const subHint = await getHint(c.id, hints[i].fromConlang, lookup);
+            if (subHint === null) continue;
+            hints.push(subHint);
         }
     }
-};
+
+    return output;
+}
+
+export function addResolvers(app: Express) {
+    app.all('/api/conlangs', (req, res) => restful(req, res, {
+        get: async (_req, res) => {
+            const conlangs: Conlang[] = (await prisma.conlang.findMany()).map(c => {
+                return {
+                    id: c.id,
+                    name: c.name,
+                    published: false
+                }
+            });
+
+            res.status(200).send(conlangs);
+            return undefined;
+        }
+    }));
+
+    app.all('/api/conlangs/:id', (req, res) => restful(req, res, {
+        get: async (req, res) => {
+            const c = await getPrismaConlang(req.params.id);
+            if (c === null)
+                return "notfound";
+
+            const conlang: Conlang = {
+                id: c.id,
+                name: c.name,
+                published: false
+            };
+
+            res.status(200).send(conlang);
+            return undefined;
+        }
+    }));
+
+    app.all('/api/conlangs/:id/hints/natlang', (req, res) => restful(req, res, {
+        get: async (req, res) => {
+            const output = req.query.from ?
+                await getRecursiveHints(req.params.id, false, req.query.from.toString()) :
+                await getAllHints(req.params.id, false);
+
+            if (output === null)
+                return "notfound";
+
+            res.status(200).send(output);
+            return undefined;
+        }
+    }));
+
+    app.all('/api/conlangs/:id/hints/conlang', (req, res) => restful(req, res, {
+        get: async (req, res) => {
+            const output = req.query.from ?
+                await getRecursiveHints(req.params.id, true, req.query.from.toString()) :
+                await getAllHints(req.params.id, true);
+
+            if (output === null)
+                return "notfound";
+
+            res.status(200).send(output);
+            return undefined;
+        }
+    }));
+
+    // 404 not found
+    app.all('/api', (_req, res) => error(res, "notfound"));
+    app.all('/api/*', (_req, res) => error(res, "notfound"));
+}
