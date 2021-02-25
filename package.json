@@ -7,7 +7,7 @@
     "migrate": "cd server && npm run migrate:deploy",
     "openapi": "npx openapi-typescript api/openapi.yaml --output server/src/api/generated/schema.ts",
     "build": "npm run openapi && cd client && npm run build && cd ../server && npm run build",
-    "heroku-postbuild": "cd client && npm install --production=false && npm run build && npm prune && cd ../server && npm install --production=false && npm run build && npm prune",
+    "heroku-postbuild": "npm run openapi && cd client && npm install --production=false && npm run build && npm prune && cd ../server && npm install --production=false && npm run build && npm prune",
     "dev": "npm run openapi && concurrently \"cd client && npm run dev\" \"cd server && npm run dev\""
   },
   "author": "Astavie",
