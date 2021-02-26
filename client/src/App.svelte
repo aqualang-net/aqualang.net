@@ -71,7 +71,6 @@
 	main {
 		position: relative;
 		width: 100%;
-		// word-wrap: break-word;
 		height: 100%;
 	}
 

@@ -6,7 +6,7 @@ This document describes the high-level architecture of **aqualang**. Both the fr
 
 For the frontend to get and post data to the backend, **aqualang** uses a RESTful API.
 
-#### > `api`
+### > `api`
 
 The `openapi.yaml` file describes the API using the OpenAPI Specification. The `errors.yaml` file lists the possible error messages the API can respond with.
 

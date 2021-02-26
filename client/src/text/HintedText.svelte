@@ -390,8 +390,7 @@
                         class:word={subtext.trim() !== ""}
                         class:span={subtext.length === 1 &&
                             punctuation.includes(subtext) &&
-                            expandSmallSpans}
-                        >{#if subtext.trim() === ""}&#8203;{:else}{subtext}{/if}</span
+                            expandSmallSpans}>{subtext}</span
                     >{/each}</span
             >{/each}
     </span>
@@ -411,15 +410,9 @@
     }
 
     .vert > span > :not(.word) {
-        // Doing this instead of an actual space character so Safari is happy
-        // We should probably do a "space size" setting for conlang fonts
-        padding-top: 1em;
-
-        &::after {
-            // Break point
-            content: "";
-            display: inline-block;
-        }
+        // Do this to make Safari happy
+        letter-spacing: -1em;
+        word-spacing: 1em;
     }
 
     .hinted {
