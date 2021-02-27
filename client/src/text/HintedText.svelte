@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { afterUpdate, getContext } from "svelte";
+    import { afterUpdate, getContext, tick } from "svelte";
     import type { WritingSettings } from "../conlang";
     import { key } from "./popupmanager";
     import Hint from "./Hint.svelte";
     import OrientatedText from "./OrientatedText.svelte";
+    import App from "../App.svelte";
 
     type Text = {
         text: string;
@@ -12,7 +13,7 @@
         static?: boolean;
     };
 
-    const { addPopup, getPos, removePopup } = getContext(key);
+    const { addPopup, getPos, removePopup, getPopup } = getContext(key);
 
     export let settings: WritingSettings = {
         horizontal: true,
@@ -41,8 +42,9 @@
 
     export let text: Text[];
 
-    let paragraph: Element;
+    let paragraph: HTMLElement;
     let popup: number = -1;
+
     let hoverHint = -1;
     let selectedHint = -1;
 
@@ -72,7 +74,7 @@
 
     function split(text: string) {
         let type = -1;
-        const texts = [];
+        const texts: string[] = [];
         for (let s of text.split("")) {
             const t = getType(s);
             if (t !== type) {
@@ -147,26 +149,6 @@
             end = offset + size;
         }
 
-        if (text[index].selected) {
-            // Enlarge to adjacent spaces
-            while (start > 0 && text[index].text.substr(start - 1, 1) === " ")
-                start--;
-            while (
-                end < text[index].text.length &&
-                text[index].text.substr(end, 1) === " "
-            )
-                end++;
-        } else {
-            // Enlarge to adjacent space if that space is at the start or end
-            if (start > 0 && text[index].text.substr(0, start).trim() === "")
-                start = 0;
-            if (
-                end < text[index].text.length &&
-                text[index].text.substr(end).trim() == ""
-            )
-                end = text[index].text.length;
-        }
-
         select(index, start, end, !text[index].selected);
         selection.deselect();
         return;
@@ -229,12 +211,39 @@
         cleanup();
     }
 
-    function select(
+    async function select(
         index: number,
         start: number,
         end: number,
         select: boolean
     ) {
+        const s = start;
+        const lengthBefore = text
+            .slice(0, index)
+            .map((t) => t.text)
+            .join("").length;
+
+        // Alter selection to include/exclude spaces
+        if (text[index].selected) {
+            // Enlarge to adjacent spaces
+            while (start > 0 && text[index].text.substr(start - 1, 1) === " ")
+                start--;
+            while (
+                end < text[index].text.length &&
+                text[index].text.substr(end, 1) === " "
+            )
+                end++;
+        } else {
+            // Enlarge to adjacent space if that space is at the start or end
+            if (start > 0 && text[index].text.substr(0, start).trim() === "")
+                start = 0;
+            if (
+                end < text[index].text.length &&
+                text[index].text.substr(end).trim() == ""
+            )
+                end = text[index].text.length;
+        }
+
         // Insert
         const t = text[index];
         text.splice(
@@ -257,6 +266,9 @@
         // Cleanup
         cleanup();
         popupDirty = true;
+
+        await tick();
+        focus(lengthBefore + s);
     }
 
     function mouseDown(e: MouseEvent) {
@@ -267,7 +279,93 @@
         }
     }
 
+    function keydown(e: KeyboardEvent) {
+        if (e.code === "Space" || e.code === "Enter") {
+            const element = document.activeElement;
+            if (element.parentElement.parentElement === paragraph) {
+                e.preventDefault();
+            }
+        }
+    }
+
+    function focus(offset: number) {
+        let seen = 0;
+        for (let i = 0; i < text.length; i++) {
+            const s = split(text[i].text);
+            for (let j = 0; j < s.length; j++) {
+                seen += s[j].length;
+                if (seen > offset) {
+                    (paragraph.children[i].children[j] as HTMLElement).focus();
+                    return;
+                }
+            }
+        }
+    }
+
+    async function keyup(e: KeyboardEvent) {
+        if (e.code === "Space") {
+            // Select text without hint
+            const element = document.activeElement;
+            if (element.parentElement.parentElement !== paragraph) {
+                return;
+            }
+
+            const subIndex = getIndex(element);
+            const index = getIndex(element.parentElement);
+
+            // Ignore text with hint
+            if (text[index].hint !== undefined) {
+                return;
+            }
+
+            // Ignore whitespace
+            const s = split(text[index].text);
+
+            if (
+                !(
+                    s[subIndex].trim() !== "" ||
+                    text[index].selected ||
+                    s.length === 1
+                )
+            ) {
+                return;
+            }
+
+            // Select text
+            const [offset, size] = getOffset(index, subIndex);
+            select(index, offset, offset + size, !text[index].selected);
+        } else if (e.code === "Enter") {
+            // Select or create hint
+            const element = document.activeElement;
+            if (element.parentElement.parentElement !== paragraph) {
+                return;
+            }
+
+            const index = getIndex(element.parentElement);
+            if (text[index].hint !== undefined) {
+                selectHint(index);
+                await tick();
+            }
+
+            if (popup !== -1) {
+                getPopup(popup).focus();
+            }
+        }
+    }
+
     // Hints
+    function selectHint(index: number) {
+        if (selectedHint === index) {
+            selectedHint = -1;
+            removePopup(popup);
+        } else {
+            getSelection().deselect();
+            deselectAll();
+            selectedHint = index;
+            recalculatePopup();
+        }
+    }
+
     function mouseEnter(e: MouseEvent) {
         const index = getIndex((e.target as Element).parentElement);
         if (text[index].hint === undefined) return;
@@ -289,15 +387,7 @@
         selectingSubIndex = -1;
 
         if (hoverHint === -1) return;
-        if (selectedHint === hoverHint) {
-            selectedHint = -1;
-            removePopup(popup);
-        } else {
-            getSelection().deselect();
-            deselectAll();
-            selectedHint = hoverHint;
-            recalculatePopup();
-        }
+        selectHint(hoverHint);
     }
 
     function recalculatePopup() {
@@ -335,12 +425,21 @@
                 py: y,
                 rotation: settings.horizontal ? 0 : settings.ltr ? 3 : 1,
                 reverseSnap: settings.horizontal && !settings.ltr,
+                onescape: () => {
+                    if (popup === -1) return;
+                    popup = -1;
+                    selectedHint = -1;
+                    deselectAll();
+                    getSelection().deselect();
+                    (paragraph.children[0].children[0] as HTMLElement).focus();
+                },
             },
             content: Hint,
             contentprops: {
                 settings: settings,
                 hintSettings: hintSettings,
                 key: getText(),
+                edit: edit,
             },
         });
     }
@@ -369,6 +468,8 @@
         on:mousedown={edit ? mouseDown : undefined}
         on:click={mouseClick}
         on:mouseup={edit ? mouseUp : undefined}
+        on:keydown={keydown}
+        on:keyup={keyup}
         bind:this={paragraph}
     >
         {#each text as text, index}
@@ -379,8 +480,26 @@
                 class:active={text.hint === selectedHint}
                 class:static={text.static}
             >
-                {#each text.hint !== undefined || text.static ? [text.text] : split(text.text) as subtext, subindex}
+                {#each text.hint !== undefined || text.static || !edit ? [text.text] : split(text.text) as subtext, subindex}
                     <span
+                        role={text.hint !== undefined
+                            ? "link"
+                            : edit
+                            ? "checkbox"
+                            : undefined}
+                        aria-checked={!edit || text.hint !== undefined
+                            ? undefined
+                            : text.selected
+                            ? true
+                            : false}
+                        aria-disabled={subtext.trim() !== "" ||
+                        text.selected ||
+                        split(text.text).length === 1
+                            ? undefined
+                            : true}
+                        tabindex={edit || text.hint !== undefined
+                            ? 0
+                            : undefined}
                         on:mouseenter={mouseEnter}
                         on:mouseleave={mouseLeave}
                         class:selecting={text.hint === undefined &&
@@ -388,9 +507,12 @@
                             selectingIndex === index &&
                             selectingSubIndex === subindex}
                         class:word={subtext.trim() !== ""}
-                        class:span={subtext.length === 1 &&
+                        class:span={edit &&
+                            subtext.length === 1 &&
                             punctuation.includes(subtext) &&
-                            expandSmallSpans}>{subtext}</span
+                            expandSmallSpans}
+                        >{#if settings.upright && !settings.horizontal && subtext.trim() === ""}{" "}<wbr
+                            />{:else}{subtext}{/if}</span
                     >{/each}</span
             >{/each}
     </span>
@@ -409,10 +531,10 @@
         padding-bottom: 0.15em;
     }
 
-    .vert > span > :not(.word) {
+    .vert:not(.pad) > span > :not(.word) {
         // Do this to make Safari happy
+        padding-top: 1em;
         letter-spacing: -1em;
-        word-spacing: 1em;
     }
 
     .hinted {

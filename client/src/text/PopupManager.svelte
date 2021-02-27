@@ -6,6 +6,8 @@
 
     let popups: PopupSettings[] = [];
 
+    let container: HTMLElement;
+
     setContext(key, {
         addPopup(settings: PopupSettings) {
             popups.push(settings);
@@ -27,19 +29,25 @@
             }
             return [x, y];
         },
+        getPopup(index: number): HTMLElement {
+            return container.children[index].children[0].children[1].children[0]
+                .children[0] as HTMLElement;
+        },
     });
 </script>
 
 <div class="popupable">
     <slot />
-    {#each popups as popup}
-        <Popup {...popup.settings}>
-            <svelte:component
-                this={popup.content}
-                {...popup.contentprops}
-            /></Popup
-        >
-    {/each}
+    <div bind:this={container}>
+        {#each popups as popup, index (popup.contentprops)}
+            <Popup {...popup.settings} {index}>
+                <svelte:component
+                    this={popup.content}
+                    {...popup.contentprops}
+                /></Popup
+            >
+        {/each}
+    </div>
 </div>
 
 <style lang="scss">

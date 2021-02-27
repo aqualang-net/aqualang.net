@@ -8,7 +8,7 @@
 		<p>
 			<HintedText
 				settings={{
-					horizontal: false,
+					horizontal: true,
 					fontltr: true,
 					ltr: true,
 					upright: true,
@@ -17,8 +17,10 @@
 					{
 						text: "The quick brown fox jumps over the lazy dog.",
 						selected: false,
+						hint: 0,
 					},
 				]}
+				edit={true}
 			/>
 		</p>
 	</PopupManager>

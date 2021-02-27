@@ -2,6 +2,7 @@
     import type { WritingSettings } from "../conlang";
     import OrientatedText from "./OrientatedText.svelte";
     import HintedText from "./HintedText.svelte";
+    import UUID from "uuidjs";
 
     type Text = {
         text: string;
@@ -27,6 +28,10 @@
 
     export let key: string;
     export let hints = ["loop", "ben lopend(e)"];
+    export let edit = true;
+
+    const hintedid = UUID.generate();
+    const hintsid = UUID.generate();
 
     function getContent(): Text[] {
         const texts: Text[] = [];
@@ -86,8 +91,17 @@
     }
 </script>
 
-<div class="flex" class:vert={!settings.horizontal} class:rtl={!settings.ltr}>
+<div
+    role="dialog"
+    aria-labelledby={hintedid}
+    aria-describedby={hintsid}
+    tabindex="-1"
+    class="flex"
+    class:vert={!settings.horizontal}
+    class:rtl={!settings.ltr}
+>
     <div
+        id={hintedid}
         class="text"
         class:vert={!settings.horizontal}
         class:rtl={!settings.ltr}
@@ -99,10 +113,12 @@
                 showHints={true}
                 allowFull={false}
                 text={getContent()}
+                {edit}
             />
         </p>
     </div>
     <div
+        id={hintsid}
         class="hints"
         class:vert={!hintSettings.horizontal}
         class:rtl={!hintSettings.ltr}

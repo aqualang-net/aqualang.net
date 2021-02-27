@@ -5,7 +5,8 @@ type PopupSettings = {
         px: number,
         py: number,
         rotation: number,
-        reverseSnap?: boolean
+        reverseSnap?: boolean,
+        onescape: () => void,
     },
     content: SvelteComponent,
     contentprops: any

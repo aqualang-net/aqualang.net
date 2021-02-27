@@ -4,7 +4,7 @@
     import { key } from "./popupmanager";
     import type { PopupSettings } from "./popupmanager";
 
-    const { addPopup, removePopup } = getContext(key);
+    const { addPopup, removePopup, getPopup } = getContext(key);
 
     setContext(key, {
         addPopup(settings: PopupSettings) {
@@ -37,12 +37,15 @@
             return [0, 0];
         },
         removePopup: removePopup,
+        getPopup: getPopup,
     });
 
     export let px: number = 0;
     export let py: number = 0;
     export let rotation: number = 0; // clockwise, 90 degree intervals
     export let reverseSnap = false;
+    export let index: number;
+    export let onescape = () => {};
 
     let box: Element;
     let content: Element;
@@ -104,6 +107,13 @@
             }
         }
     });
+
+    function keyup(e: KeyboardEvent) {
+        if (e.code === "Escape") {
+            removePopup(index);
+            onescape();
+        }
+    }
 </script>
 
 <div
@@ -113,6 +123,7 @@
     class:deg180={rotation === 2}
     class:deg270={rotation === 3}
     bind:this={box}
+    on:keyup={keyup}
     on:mouseup={(e) => e.stopImmediatePropagation()}
 >
     <div class="block">
@@ -205,7 +216,6 @@
 
     .deg0 .popover-arrow {
         left: calc(50% - 0.5em);
-        top: calc(100% - 0.5em);
     }
 
     .deg90 .popover-arrow {
@@ -215,6 +225,7 @@
 
     .deg180 .popover-arrow {
         left: calc(50% - 0.5em);
+        top: calc(100% - 0.5em);
     }
 
     .deg270 .popover-arrow {
