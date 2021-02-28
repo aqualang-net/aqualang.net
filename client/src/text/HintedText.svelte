@@ -303,13 +303,7 @@
             // Ignore whitespace
             const s = split(text[index].text);
 
-            if (
-                !(
-                    s[subIndex].trim() !== "" ||
-                    text[index].selected ||
-                    s.length === 1
-                )
-            ) {
+            if (!canSelect(index, subIndex)) {
                 return;
             }
 
@@ -325,7 +319,7 @@
 
             const index = getIndex(element.parentElement);
             if (text[index].hint !== undefined) {
-                selectHint(index);
+                selectHint(text[index].hint);
                 await tick();
             }
 
@@ -345,6 +339,19 @@
 
         deletePopup();
         deselectText();
+    }
+
+    function canSelect(index: number, subIndex: number) {
+        if (text[index].selected) return true;
+        const s = split(text[index].text);
+        return (
+            s[subIndex].trim() !== "" ||
+            (index > 0 &&
+                index < text.length - 1 &&
+                s.length === 1 &&
+                text[index - 1].selected &&
+                text[index + 1].selected)
+        );
     }
 
     // Popups
@@ -505,9 +512,7 @@
                         aria-disabled={!edit ||
                         text.hint !== undefined ||
                         text.static ||
-                        subtext.trim() !== "" ||
-                        text.selected ||
-                        split(text.text).length === 1
+                        canSelect(index, subindex)
                             ? undefined
                             : true}
                         tabindex={(edit || text.hint !== undefined) &&
@@ -520,11 +525,12 @@
                             !text.static &&
                             selectingIndex === index &&
                             selectingSubIndex === subindex}
-                        class:word={subtext.trim() !== ""}
-                        class:span={edit &&
-                            subtext.length === 1 &&
-                            punctuation.includes(subtext) &&
-                            expandSmallSpans}>{subtext}</span
+                        class:selectable={!edit ||
+                        text.hint !== undefined ||
+                        text.static ||
+                        canSelect(index, subindex)
+                            ? true
+                            : undefined}>{subtext}</span
                     >{/each}</span
             >{/each}
     </span>
@@ -533,16 +539,6 @@
 <svelte:window on:resize={recalculatePopup} on:mouseup={windowUp} />
 
 <style type="text/scss">
-    .pad:not(.vert) .span {
-        padding-left: 0.15em;
-        padding-right: 0.15em;
-    }
-
-    .vert.pad .span {
-        padding-top: 0.15em;
-        padding-bottom: 0.15em;
-    }
-
     .hinted {
         // Regular css
         color: white;
@@ -561,8 +557,7 @@
                     background-color: #00659b;
                 }
                 &:not(.selected) {
-                    > .word:hover,
-                    > :only-child:hover {
+                    > .selectable:hover {
                         background-color: #133a50;
                         cursor: pointer;
                     }
@@ -570,8 +565,7 @@
             }
 
             &:hover > :not(.hint):not(.static) {
-                .word.selecting,
-                :only-child.selecting,
+                .selectable.selecting,
                 &.selected > .selecting {
                     user-select: text;
                     -moz-user-select: text;
@@ -584,8 +578,7 @@
                 }
 
                 &:not(.selected) {
-                    > .word:active,
-                    > :only-child:active {
+                    > .selectable:active {
                         background-color: #133a50;
                     }
                 }
