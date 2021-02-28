@@ -347,7 +347,7 @@
         deselectText();
     }
 
-    // Hints
+    // Popups
     function selectHint(index: number) {
         if (selectedHint === index) {
             selectedHint = -1;
@@ -524,9 +524,7 @@
                         class:span={edit &&
                             subtext.length === 1 &&
                             punctuation.includes(subtext) &&
-                            expandSmallSpans}
-                        >{#if settings.upright && !settings.horizontal && subtext.trim() === ""}{" "}<wbr
-                            />{:else}{subtext}{/if}</span
+                            expandSmallSpans}>{subtext}</span
                     >{/each}</span
             >{/each}
     </span>
@@ -543,12 +541,6 @@
     .vert.pad .span {
         padding-top: 0.15em;
         padding-bottom: 0.15em;
-    }
-
-    .vert:not(.pad) > span > :not(.word) {
-        // Do this to make Safari happy
-        padding-top: 1em;
-        letter-spacing: -1em;
     }
 
     .hinted {

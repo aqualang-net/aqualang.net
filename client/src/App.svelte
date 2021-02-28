@@ -8,7 +8,7 @@
 		<p>
 			<HintedText
 				settings={{
-					horizontal: true,
+					horizontal: false,
 					fontltr: true,
 					ltr: true,
 					upright: true,

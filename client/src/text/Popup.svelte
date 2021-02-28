@@ -58,10 +58,12 @@
             let absx = px - content.scrollWidth / 2;
             if (reverseSnap) {
                 absx += content.scrollWidth;
-                if (absx > box.parentElement.clientWidth) {
+                if (absx > box.parentElement.parentElement.clientWidth) {
                     content.setAttribute(
                         "style",
-                        `left:${box.parentElement.clientWidth - absx}px`
+                        `left:${
+                            box.parentElement.parentElement.clientWidth - absx
+                        }px`
                     );
                     return;
                 }
@@ -72,10 +74,12 @@
             }
             if (!reverseSnap) {
                 absx += content.scrollWidth;
-                if (absx > box.parentElement.clientWidth) {
+                if (absx > box.parentElement.parentElement.clientWidth) {
                     content.setAttribute(
                         "style",
-                        `left:${box.parentElement.clientWidth - absx}px`
+                        `left:${
+                            box.parentElement.parentElement.clientWidth - absx
+                        }px`
                     );
                     return;
                 }
@@ -84,10 +88,12 @@
             let absy = py - content.scrollHeight / 2;
             if (reverseSnap) {
                 absy += content.scrollHeight;
-                if (absy > box.parentElement.clientHeight) {
+                if (absy > box.parentElement.parentElement.clientHeight) {
                     content.setAttribute(
                         "style",
-                        `top:${box.parentElement.clientHeight - absy}px`
+                        `top:${
+                            box.parentElement.parentElement.clientHeight - absy
+                        }px`
                     );
                     return;
                 }
@@ -98,10 +104,12 @@
             }
             if (!reverseSnap) {
                 absy += content.scrollHeight;
-                if (absy > box.parentElement.clientHeight) {
+                if (absy > box.parentElement.parentElement.clientHeight) {
                     content.setAttribute(
                         "style",
-                        `top:${box.parentElement.clientHeight - absy}px`
+                        `top:${
+                            box.parentElement.parentElement.clientHeight - absy
+                        }px`
                     );
                     return;
                 }
