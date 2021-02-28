@@ -2,7 +2,7 @@
     import type { WritingSettings } from "../conlang";
     import OrientatedText from "./OrientatedText.svelte";
     import HintedText from "./HintedText.svelte";
-    import UUID from "uuidjs";
+    import UUID from "../util/uuid.js";
 
     type Text = {
         text: string;

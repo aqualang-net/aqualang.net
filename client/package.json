@@ -26,7 +26,6 @@
     "typescript": "^3.9.3"
   },
   "dependencies": {
-    "sirv-cli": "^1.0.0",
-    "uuidjs": "^4.2.8"
+    "sirv-cli": "^1.0.0"
   }
 }
