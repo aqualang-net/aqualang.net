@@ -29,9 +29,20 @@
             }
             return [x, y];
         },
-        getPopup(index: number): HTMLElement {
-            return container.children[index].children[0].children[1].children[0]
-                .children[0] as HTMLElement;
+        focusPopup(index: number) {
+            if (index === -1) return null;
+
+            const popup = container.children[index];
+            const focusable = popup.querySelector(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            ) as HTMLElement;
+            focusable?.focus();
+        },
+        contains(index: number, element: Node) {
+            if (index === -1) return false;
+            for (let i = index; i < popups.length; i++)
+                if (container.children[i].contains(element)) return true;
+            return false;
         },
     });
 </script>
@@ -39,7 +50,7 @@
 <div class="popupable">
     <slot />
     <div bind:this={container}>
-        {#each popups as popup, index (popup.contentprops)}
+        {#each popups as popup, index (popup.key)}
             <Popup {...popup.settings} {index}>
                 <svelte:component
                     this={popup.content}

@@ -95,7 +95,6 @@
     role="dialog"
     aria-labelledby={hintedid}
     aria-describedby={hintsid}
-    tabindex="-1"
     class="flex"
     class:vert={!settings.horizontal}
     class:rtl={!settings.ltr}

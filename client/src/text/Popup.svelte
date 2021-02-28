@@ -4,7 +4,7 @@
     import { key } from "./popupmanager";
     import type { PopupSettings } from "./popupmanager";
 
-    const { addPopup, removePopup, getPopup } = getContext(key);
+    const { addPopup, removePopup, focusPopup, contains } = getContext(key);
 
     setContext(key, {
         addPopup(settings: PopupSettings) {
@@ -37,7 +37,8 @@
             return [0, 0];
         },
         removePopup: removePopup,
-        getPopup: getPopup,
+        focusPopup: focusPopup,
+        contains: contains,
     });
 
     export let px: number = 0;
@@ -114,6 +115,32 @@
             onescape();
         }
     }
+
+    function keydown(e: KeyboardEvent) {
+        // Trap within popup
+        if (e.code !== "Tab") {
+            return;
+        }
+
+        const focusable = box.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) {
+            return;
+        }
+
+        if (e.shiftKey) {
+            if (document.activeElement === focusable[0]) {
+                e.preventDefault();
+                (focusable[focusable.length - 1] as HTMLElement).focus();
+            }
+        } else {
+            if (document.activeElement === focusable[focusable.length - 1]) {
+                e.preventDefault();
+                (focusable[0] as HTMLElement).focus();
+            }
+        }
+    }
 </script>
 
 <div
@@ -124,7 +151,7 @@
     class:deg270={rotation === 3}
     bind:this={box}
     on:keyup={keyup}
-    on:mouseup={(e) => e.stopImmediatePropagation()}
+    on:keydown={keydown}
 >
     <div class="block">
         <div class="popover-arrow" />

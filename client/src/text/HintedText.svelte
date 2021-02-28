@@ -1,10 +1,9 @@
 <script lang="ts">
-    import { afterUpdate, getContext, tick } from "svelte";
+    import { getContext, tick } from "svelte";
     import type { WritingSettings } from "../conlang";
     import { key } from "./popupmanager";
     import Hint from "./Hint.svelte";
     import OrientatedText from "./OrientatedText.svelte";
-    import App from "../App.svelte";
 
     type Text = {
         text: string;
@@ -13,7 +12,9 @@
         static?: boolean;
     };
 
-    const { addPopup, getPos, removePopup, getPopup } = getContext(key);
+    const { addPopup, getPos, removePopup, focusPopup, contains } = getContext(
+        key
+    );
 
     export let settings: WritingSettings = {
         horizontal: true,
@@ -51,15 +52,9 @@
     let selectingIndex = -1;
     let selectingSubIndex = -1;
 
-    let popupDirty = false;
+    let lastOffset = -1;
 
-    afterUpdate(() => {
-        if (popupDirty) {
-            recalculatePopup();
-            popupDirty = false;
-        }
-    });
-
+    // Component selection
     function getIndex(e: Element): number {
         if (e.previousElementSibling !== null)
             return getIndex(e.previousElementSibling) + 1;
@@ -93,35 +88,18 @@
         return [first.join("").length, things[0].length];
     }
 
-    function deselectHint() {
-        selectedHint = -1;
-        removePopup(popup);
-        popup = -1;
-    }
-
     function mouseUp(e: Event) {
-        if (edit && (selectingIndex === -1 || selectingSubIndex === -1)) {
-            deselectHint();
-            deselectAll();
-            return;
-        }
-
         // Check if we started from a selectable span
         const selection = getSelection();
         if (!selection?.getParentElement()?.classList.contains("selecting")) {
-            e.stopImmediatePropagation();
-
-            if (hoverHint === -1) {
-                deselectHint();
-            }
-
-            deselectAll();
+            deletePopup();
+            deselectText();
             return;
         }
 
         // We're inside!
         e.stopImmediatePropagation();
-        deselectHint();
+        deletePopup();
 
         if (!edit) {
             return;
@@ -204,7 +182,7 @@
         text = text;
     }
 
-    function deselectAll() {
+    function deselectText() {
         selectingIndex = -1;
         selectingSubIndex = -1;
         for (let t of text) t.selected = false;
@@ -265,10 +243,11 @@
 
         // Cleanup
         cleanup();
-        popupDirty = true;
 
         await tick();
+
         focus(lengthBefore + s);
+        recalculatePopup();
     }
 
     function mouseDown(e: MouseEvent) {
@@ -289,6 +268,9 @@
     }
 
     function focus(offset: number) {
+        lastOffset = offset;
+
+        // Calculate word to focus right now
         let seen = 0;
         for (let i = 0; i < text.length; i++) {
             const s = split(text[i].text);
@@ -348,9 +330,21 @@
             }
 
             if (popup !== -1) {
-                getPopup(popup).focus();
+                focusPopup(popup);
             }
         }
+    }
+
+    function windowUp(e: MouseEvent) {
+        if (
+            paragraph.contains(e.target as Element) ||
+            contains(popup, e.target as Element)
+        ) {
+            return;
+        }
+
+        deletePopup();
+        deselectText();
     }
 
     // Hints
@@ -358,9 +352,10 @@
         if (selectedHint === index) {
             selectedHint = -1;
             removePopup(popup);
+            popup = -1;
         } else {
             getSelection().deselect();
-            deselectAll();
+            deselectText();
             selectedHint = index;
             recalculatePopup();
         }
@@ -419,29 +414,42 @@
             if (settings.ltr) x += nth.offsetWidth;
         }
 
+        const t = getText();
+
         popup = addPopup({
             settings: {
                 px: x,
                 py: y,
                 rotation: settings.horizontal ? 0 : settings.ltr ? 3 : 1,
                 reverseSnap: settings.horizontal && !settings.ltr,
-                onescape: () => {
+                onescape: async () => {
                     if (popup === -1) return;
+
                     popup = -1;
                     selectedHint = -1;
-                    deselectAll();
+                    deselectText();
                     getSelection().deselect();
-                    (paragraph.children[0].children[0] as HTMLElement).focus();
+
+                    await tick();
+
+                    focus(lastOffset);
                 },
             },
+            key: t,
             content: Hint,
             contentprops: {
                 settings: settings,
                 hintSettings: hintSettings,
-                key: getText(),
+                key: t,
                 edit: edit,
             },
         });
+    }
+
+    function deletePopup() {
+        selectedHint = -1;
+        removePopup(popup);
+        popup = -1;
     }
 
     function getText() {
@@ -484,20 +492,26 @@
                     <span
                         role={text.hint !== undefined
                             ? "link"
-                            : edit
+                            : edit && !text.static
                             ? "checkbox"
                             : undefined}
-                        aria-checked={!edit || text.hint !== undefined
+                        aria-checked={!edit ||
+                        text.hint !== undefined ||
+                        text.static
                             ? undefined
                             : text.selected
                             ? true
                             : false}
-                        aria-disabled={subtext.trim() !== "" ||
+                        aria-disabled={!edit ||
+                        text.hint !== undefined ||
+                        text.static ||
+                        subtext.trim() !== "" ||
                         text.selected ||
                         split(text.text).length === 1
                             ? undefined
                             : true}
-                        tabindex={edit || text.hint !== undefined
+                        tabindex={(edit || text.hint !== undefined) &&
+                        !text.static
                             ? 0
                             : undefined}
                         on:mouseenter={mouseEnter}
@@ -518,7 +532,7 @@
     </span>
 </OrientatedText>
 
-<svelte:window on:resize={recalculatePopup} on:mouseup={mouseUp} />
+<svelte:window on:resize={recalculatePopup} on:mouseup={windowUp} />
 
 <style type="text/scss">
     .pad:not(.vert) .span {
