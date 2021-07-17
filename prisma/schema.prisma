@@ -1,0 +1,50 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialActions"]
+}
+
+model Conlang {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  name      String
+
+  prefix    String @default("-")
+  suffix    String @default("-")
+  separator String @default(" ... ")
+
+  hints Hint[]
+}
+
+model Hint {
+  id          Int     @id @default(autoincrement())
+  key         String
+  hints       String // Hints are separated by newline
+  fromConlang Boolean
+
+  conlang   Conlang @relation(fields: [conlangId], references: [id], onDelete: Cascade)
+  conlangId Int
+
+  Section Section[]
+
+  @@unique([conlangId, fromConlang, key])
+}
+
+// Section of a hint component
+model Section {
+  start  Int
+  end    Int
+  prefix Boolean
+  suffix Boolean
+
+  hint      Hint @relation(fields: [hintId], references: [id], onDelete: Cascade)
+  hintId    Int
+  areaStart Int // Refers to the index inside the string where the parent component starts
+
+  @@id([hintId, areaStart, start])
+  @@index([hintId])
+}
