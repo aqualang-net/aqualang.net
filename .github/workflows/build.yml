@@ -1,0 +1,21 @@
+name: Build Test
+
+on:
+  push:
+    branches:
+    - development
+  pull_request:
+    branches:
+    - development
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+
+    steps:
+    - name: Check out repository code
+      uses: actions/checkout@v2
+    - name: Build
+      run: npm i --also=dev && npm run build

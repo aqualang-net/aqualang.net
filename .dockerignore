@@ -1,0 +1,7 @@
+.git
+/node_modules
+/.vscode
+/.svelte-kit
+/.vercel_build_output
+/package
+.DS_Store
