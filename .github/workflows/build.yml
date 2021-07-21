@@ -20,8 +20,8 @@ jobs:
     - name: Build
       run: npm i --also=dev && npm run build
     - name: Upload Vercel artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: vercel_build_output
-          path: |
-            .vercel_build_output
+      uses: actions/upload-artifact@v2
+      with:
+        name: vercel_build_output
+        path: |
+          .vercel_build_output
