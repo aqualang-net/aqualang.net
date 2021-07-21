@@ -1,7 +1,6 @@
 import prisma from "$lib/api/db";
-import type { Request } from "@sveltejs/kit";
 
-export async function get(req: Request) {
+export async function get() {
     const conlangs = (await prisma.conlang.findMany()).map(c => {
         return {
             id: c.id,

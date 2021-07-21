@@ -3,7 +3,6 @@ import getError from "$lib/api/error";
 import type { Request } from "@sveltejs/kit";
 import type { components } from "$lib/api/generated/schema";
 
-type APIConlang = components["schemas"]["Conlang"];
 type APIHint = components["schemas"]["Hint"];
 type APIComponent = NonNullable<APIHint["components"]>[number];
 
